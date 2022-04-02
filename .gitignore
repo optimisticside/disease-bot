@@ -1,0 +1,6 @@
+src/**/__pycache__
+src/**/*.pyo
+dist
+build
+.idea
+*.spec
