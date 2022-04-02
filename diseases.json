@@ -1,4 +1,4 @@
 {
-	"no-bitches": ["pranav", "hansel"],
-	"akash": ["jp-master", "no-bitches"]
+	"disease-name": [["symptom-1", "symptom-2"], ["treatment 1", "treatment 2"]],
+	"other-disease": [["symptom3", "symptom-4"], ["there-is-no-cure"]]
 }

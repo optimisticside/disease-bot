@@ -33,17 +33,25 @@ async def handle_command(message, database, command, args):
         diseases = []
         given = [x.lower() for x in args]
 
-        for (disease, symptoms) in database.items():
+        for (disease, data) in database.items():
+            symptoms, *_ = data
             diseases.append((disease, len([x for x in symptoms if not x in given])))
-        diseases.sort(key=lambda x: x[1])
-        await message.reply("You probably have have:" + ", ".join([x[0] for x in diseases[1:RESULT_COUNT]]))
 
-    elif command == "symptoms":
+        diseases.sort(reverse=True, key=lambda x: x[1])
+        result = ", ".join(x[0] for x in diseases[1:RESULT_COUNT])
+        await message.reply(f"You might have: {result}")
+
+    elif command == "info":
         # this is for u akash
         name = args[0].lower()
+
         if not name in database:
             return await message.reply(f"{name} is was not found in the database.")
-        await message.reply(f"Symptoms for {name} include: " + ", ".join(database[name]))
+
+        disease = database[name]
+        symptoms = ", ".join(disease[0])
+        treatements = ", ".join(disease[1])
+        await message.reply(f"Symptoms for {name} include: {symptoms}\nTreatements include: {treatements}.")
 
     elif command == "help":
         await message.reply(f"Say `{PREFIX}diagnose` for me to diagnoze seomthing.")
@@ -84,6 +92,7 @@ def __main__(args):
                 content = message.content[len(prefix) :].strip()
                 if len(content) < 1:
                     return
+
                 (command, *args) = content.split(" ")
                 await handle_command(message, database, command, args)
 
