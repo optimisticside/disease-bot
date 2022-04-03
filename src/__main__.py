@@ -25,6 +25,7 @@ DISCLAIMER = (
     "Consult a physician for a diagnosis."
 )
 
+
 Database = Dict[str, List[List[str]]]
 
 
@@ -51,12 +52,12 @@ async def handle_command(
         diseases: List[Tuple[str, int]] = []
         given = [x.lower() for x in args]
 
-        for (disease, data) in database.items():
+        for (name, data) in database.items():
             symptoms, *_ = data
             # We rank diseases' likeliness by how many of the
             # symptoms you have that are not a symptom of it.
             rank = len([x for x in symptoms if x not in given])
-            diseases.append((disease, rank))
+            diseases.append((name, rank))
 
         diseases.sort(reverse=False, key=lambda x: x[1])
         result = ", ".join(x[0] for x in diseases[0:RESULT_COUNT])
