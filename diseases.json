@@ -55,5 +55,6 @@
 	"hernia": [["bulge", "swelling", "stomach-pain"], ["Supportive Care", "Surgery"]],
 	"concussion": [["headache", "confusion", "confusion", "lack-of-coordination", "memory-loss", "nausea", "vomiting", "dizziness", "ringing-in-ears", "sleepiness", "fatigue"], ["Pain medications", "Rest"]],
 	"osgood-schlatter": [["knee-lump", "pain"], ["Anti-inflammatories"]],
-	"parkinsons": [["hand-tremors", "shaky hands", "slow-movement", "loss-of-balance", "stiffness"], ["Doctor prescribed medication"]]
+	"parkinsons": [["hand-tremors", "shaky hands", "slow-movement", "loss-of-balance", "stiffness"], ["Doctor prescribed medication"]],
+	"no bitches": [["participating-in-this-hackathon"], ["There is no cure"]]
 }
