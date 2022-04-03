@@ -70,10 +70,9 @@ async def handle_command(
         await message.reply(f"You might have: {result}\n{DISCLAIMER}")
 
     elif command == "info":
-        # this is for u akash
         name = args[0].lower()
 
-        if not name in database:
+        if name not in database:
             return await message.reply(f"{name} is was not found in the database.")
 
         disease = database[name]
