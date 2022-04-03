@@ -1,25 +1,43 @@
-# 2022 EVHS Programming Club Hackathon
-# Vijay Sharma, Pranav Kunnath, Hansel Puthenparambil, Akash Agarwal
-# 4/2/2022
-# See LICENSE for further details
+"""Disease diagnoser bot
+Tries its best to diagnose what medical conditions the user
+may have based on what symptoms they provide. Also provides information
+about diseases, such as their symptoms and possible treatments.
 
-import discord
-import asyncio
-import json
+Please note that this bot is not in no way a proper medical diagnosis
+and anyone in need of a diagnosis should consult a physician.
+
+2022 EVHS Programming Club Hackathon
+Vijay Sharma, Pranav Kunnath, Hansel Puthenparambil, Akash Agarwal
+4/2/2022
+See LICENSE for further details
+"""
+
 import sys
+import json
+from typing import List, Dict, Tuple, Optional
+import discord
+
 
 PREFIX = "?"
 RESULT_COUNT = 5
+DISCLAIMER = (
+    "Please note that this result is in no way a proper diagnosis.\n"
+    "Consult a physician for a diagnosis."
+)
+
+Database = Dict[str, List[List[str]]]
 
 
-if not '--nouvloop' in sys.argv:
+if "--nouvloop" not in sys.argv:
     import uvloop
+
     uvloop.install()
 
 
-async def handle_command(message, database, command, args):
-    """Handles a command given to the bot by a user.
-    """
+async def handle_command(
+    message: discord.Message, database: Database, command: str, args: str
+):
+    """Handles a command given to the bot by a user."""
     if message.author.bot or not message.guild:
         return
 
@@ -30,16 +48,19 @@ async def handle_command(message, database, command, args):
         # We want to provide the most likely diseases, so we
         # store a array of tuples with the disease name and the
         # number of matched symptoms.
-        diseases = []
+        diseases: List[Tuple[str, int]] = []
         given = [x.lower() for x in args]
 
         for (disease, data) in database.items():
             symptoms, *_ = data
-            diseases.append((disease, len([x for x in symptoms if not x in given])))
+            # We rank diseases' likeliness by how many of the
+            # symptoms you have that are not a symptom of it.
+            rank = len([x for x in symptoms if x not in given])
+            diseases.append((disease, rank))
 
-        diseases.sort(reverse=True, key=lambda x: x[1])
-        result = ", ".join(x[0] for x in diseases[1:RESULT_COUNT])
-        await message.reply(f"You might have: {result}")
+        diseases.sort(reverse=False, key=lambda x: x[1])
+        result = ", ".join(x[0] for x in diseases[0:RESULT_COUNT])
+        await message.reply(f"You might have: {result}\n{DISCLAIMER}")
 
     elif command == "info":
         # this is for u akash
@@ -51,57 +72,50 @@ async def handle_command(message, database, command, args):
         disease = database[name]
         symptoms = ", ".join(disease[0])
         treatements = ", ".join(disease[1])
-        await message.reply(f"Symptoms for {name} include: {symptoms}\nTreatements include: {treatements}.")
+        await message.reply(
+            f"Symptoms for {name} include: {symptoms}\nTreatements include: {treatements}."
+        )
 
     elif command == "help":
         await message.reply(f"Say `{PREFIX}diagnose` for me to diagnoze seomthing.")
 
 
-def make_database(path):
-    """Opens the database file.
-    Returns None if not found.
-    """
-    with open(path) as f:
-        return json.load(f)
-
-
-def __main__(args):
+def main(args: List[str]):
     """Main program entry point. Takes in arguments
     under the asusmption that the program has been removed
     from the arguments before being given to this subroutine.
     """
     if len(args) < 2:
-        return print("Invalid arguments provided.", file=sys.stderr)
+        print("Invalid arguments provided.", file=sys.stderr)
+        return
 
-    database = make_database(args[1])
-    bot = discord.Client()
+    with open(args[1], "r", encoding="utf-8") as database_file:
+        database = json.load(database_file)
+        bot = discord.Client()
 
-    if database is None:
-        return print("Unable to open database file. Check file permissions.", file=sys.stderr)
+        @bot.event
+        async def on_message(message: discord.Message):
+            prefix: Optional[str] = None
+            for possible_prefix in [PREFIX, f"<@{bot.user.id}>"]:
+                if message.content.startswith(possible_prefix):
+                    prefix = possible_prefix
+                    break
 
-    @bot.event
-    async def on_message(message: discord.Message):
-        prefix: Optional[str] = None
-        for p in [PREFIX, f"<@{bot.user.id}>"]:
-            if message.content.startswith(p):
-                prefix = p
-                break
+            if prefix is not None and message.content != prefix:
+                async with message.channel.typing():
+                    content = message.content[len(prefix) :].strip()
+                    if len(content) < 1:
+                        return
 
-        if prefix is not None and message.content != prefix:
-            async with message.channel.typing():
-                content = message.content[len(prefix) :].strip()
-                if len(content) < 1:
-                    return
+                    (command, *args) = content.split(" ")
+                    await handle_command(message, database, command, args)
 
-                (command, *args) = content.split(" ")
-                await handle_command(message, database, command, args)
-
-    @bot.event
-    async def on_ready():
-        print("Connected to Discord")
+        @bot.event
+        async def on_ready():
+            print("Connected to Discord")
 
     bot.run(args[0])
 
 
 if __name__ == "__main__":
-    __main__(sys.argv[1:])
+    main(sys.argv[1:])
