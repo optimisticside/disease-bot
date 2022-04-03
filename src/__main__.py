@@ -78,7 +78,7 @@ async def handle_command(
         )
 
     elif command == "help":
-        await message.reply(f"Say `{PREFIX}diagnose` for me to diagnoze seomthing.")
+        await message.reply(f"Say `{PREFIX}diagnose` for me to diagnose something.")
 
 
 def main(args: List[str]):
