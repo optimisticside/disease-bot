@@ -56,7 +56,13 @@ async def handle_command(
             symptoms, *_ = data
             # We rank diseases' likeliness by how many of the
             # symptoms you have that are not a symptom of it.
-            rank = len([x for x in symptoms if x not in given])
+            # 
+            # We also want to account for how many symptoms were provided,
+            # since if a disease has only 1 symptom provided and none of them
+            # match, then the rank will be 1, which is quite low compared to some
+            # other diseases with many pre-defined symptoms. This is why we divide
+            # by the number of symptoms to reduce our bias.
+            rank = len([x for x in symptoms if x not in given]) / len(symptoms)
             diseases.append((name, rank))
 
         diseases.sort(reverse=False, key=lambda x: x[1])
