@@ -20,6 +20,7 @@ import discord
 
 PREFIX = "?"
 RESULT_COUNT = 5
+MINIMUM_THRESHOLD = 0.01
 DISCLAIMER = (
     "Please note that this result is in no way a proper diagnosis.\n"
     "Consult a physician for a diagnosis."
@@ -54,19 +55,27 @@ async def handle_command(
 
         for (name, data) in database.items():
             symptoms, *_ = data
-            # We rank diseases' likeliness by how many of the
-            # symptoms you have that are not a symptom of it.
-            # 
-            # We also want to account for how many symptoms were provided,
-            # since if a disease has only 1 symptom provided and none of them
-            # match, then the rank will be 1, which is quite low compared to some
-            # other diseases with many pre-defined symptoms. This is why we divide
-            # by the number of symptoms to reduce our bias.
-            rank = len([x for x in symptoms if x not in given]) / len(symptoms)
-            diseases.append((name, rank))
+            # At the end of the day, we want the algorithm to look
+            # at the number of matched symptoms for the disease,
+            # yet we also want to account for the number of symptoms
+            # the disease has listed, as well as the number of
+            # symptoms the user provided to adjust the likliness
+            # of that specific disease.
+            #
+            # A disease should be more likely if the user provided less
+            # symptoms were provided and less likely if more symptoms
+            # were added to the disease.
+            common = len([x for x in symptoms if x in given])
+            rank = common * (len(given) / len(symptoms))
+            if rank >= MINIMUM_THRESHOLD:
+                diseases.append((name, rank))
 
-        diseases.sort(reverse=False, key=lambda x: x[1])
-        result = ", ".join(x[0] for x in diseases[0:RESULT_COUNT])
+        if len(diseases) < 1:
+            await message.reply("Not enough information provided.")
+            return
+
+        diseases.sort(reverse=True, key=lambda x: x[1])
+        result = ", ".join(x[0] for x in diseases[: max(RESULT_COUNT, len(diseases))])
         await message.reply(f"You might have: {result}\n{DISCLAIMER}")
 
     elif command == "info":
